@@ -1,0 +1,87 @@
+name: Production release checks
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+permissions:
+  contents: read
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [server, client]
+    defaults:
+      run:
+        working-directory: ${{ matrix.project }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: ${{ matrix.project }}/package-lock.json
+      - run: npm ci
+      - run: npm run type-check
+      - if: matrix.project == 'client'
+        run: npm run lint
+      - if: matrix.project == 'server'
+        run: node scripts/test-isolated.mjs --coverage
+      - if: matrix.project == 'client'
+        run: npm test -- --coverage
+      - run: npm run build
+      - run: npm audit --audit-level=moderate
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-${{ matrix.project }}
+          path: ${{ matrix.project }}/coverage
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            server/package-lock.json
+            client/package-lock.json
+      - run: npm ci --prefix server
+      - run: npm ci --prefix client
+      - name: Start disposable dependencies
+        run: |
+          docker run -d --name novel-ci-mongo -p 127.0.0.1:27028:27017 mongo:8.0 --replSet rs0 --bind_ip_all
+          docker run -d --name novel-ci-redis -p 127.0.0.1:6389:6379 redis:7-alpine
+          for attempt in $(seq 1 30); do
+            if docker exec novel-ci-mongo mongosh --quiet --eval 'db.adminCommand({ping:1})'; then break; fi
+            sleep 1
+          done
+          docker exec novel-ci-mongo mongosh --quiet --eval 'rs.initiate({_id:"rs0",members:[{_id:0,host:"localhost:27017"}]})'
+          for attempt in $(seq 1 30); do
+            if docker exec novel-ci-mongo mongosh --quiet --eval 'if (!db.hello().isWritablePrimary) quit(1)'; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: Mongo, Redis, HTTP, sockets and backup restore regressions
+        working-directory: server
+        env:
+          RUN_PHASE_A_INTEGRATION: '1'
+          RUN_PHASE_9_INTEGRATION: '1'
+          RUN_REMEDIATION_INTEGRATION: '1'
+          RUN_SECURITY_INTEGRATION: '1'
+          TEST_MONGO_CONTAINER: novel-ci-mongo
+        run: npx vitest run src/integration --no-file-parallelism --reporter=default --reporter=json --outputFile=integration-results.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-results
+          path: server/integration-results.json
+      - if: always()
+        run: docker rm -f novel-ci-mongo novel-ci-redis

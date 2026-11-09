@@ -1,0 +1,10 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "functions": { "api/ssr.mjs": { "includeFiles": "{dist/**,.server/**}", "maxDuration": 15 } },
+  "routes": [
+    { "src": "/(?:|index.html|stories(?:/.*)?|ranking|robots.txt|sitemap.xml|sitemaps/.*|seo/covers/.*)", "dest": "/api/ssr" },
+    { "handle": "filesystem" },
+    { "src": "/.*", "dest": "/api/ssr" }
+  ]
+}

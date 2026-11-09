@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-labelledby="logo-title">
+  <title id="logo-title">IuTruyen</title>
+  <style>
+    @media (prefers-color-scheme: dark) {
+      .navy-page { fill: #F1F5F9; }
+    }
+  </style>
+  <defs>
+    <mask id="heart-cutout" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64">
+      <rect width="64" height="64" fill="#FFFFFF" />
+      <path fill="#000000" d="M32 43C29 39 20 33 20 27C20 23 23 21 26 21C29 21 31 23 32 25C33 23 35 21 38 21C41 21 44 23 44 27C44 33 35 39 32 43Z" />
+    </mask>
+  </defs>
+  <g mask="url(#heart-cutout)">
+    <path fill="#5BB8F5" d="M9 14C9 8 17 9 25 13C29 15 31 19 32 23V49C26 42 16 40 7 42L9 14Z" />
+    <path class="navy-page" fill="#172B4D" d="M55 14C55 8 47 9 39 13C35 15 33 19 32 23V49C38 42 48 40 57 42L55 14Z" />
+    <path fill="#5BB8F5" d="M7 45C17 42 26 45 32 52V56C24 49 16 48 7 50C5 50 5 46 7 45Z" />
+    <path class="navy-page" fill="#172B4D" d="M57 45C47 42 38 45 32 52V56C40 49 48 48 57 50C59 50 59 46 57 45Z" />
+  </g>
+</svg>

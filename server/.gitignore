@@ -1,0 +1,12 @@
+# Local env (never commit secrets)
+.env
+.env.*
+!.env.example
+
+node_modules/
+dist/
+coverage/
+*.log
+.tmp-crawler-storage/
+scripts
+docker

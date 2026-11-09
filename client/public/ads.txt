@@ -1,0 +1,4 @@
+# Google AdSense ads.txt template
+# Thay the pub-0000000000000000 bang ma Publisher ID cua ban sau khi duoc phe duyet
+google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0
+
